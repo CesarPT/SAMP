@@ -5,6 +5,6 @@ Mapas criados para SAMP (San Andreas Multiplayer) em .pwn para o servidor Brasil
 O intérprete da linguagem, é a máquina virtual, onde o código passa a ser chamado de AMX. AMX é interpretado como na linguagem de programação Assembly, assim, 
 podendo ser interpretado com outras linguagens de programação de terceira geração, como por exemplo, C++." - Wikipedia
 
-Pawn é a linguagem usada em GTA San Andreas.
+Pawn é a linguagem de programação usada no jogo GTA San Andreas.
 
 Alguns projetos feitos nos programas Texture Studio (com texturas) e outros em SAMP Map Construction.
