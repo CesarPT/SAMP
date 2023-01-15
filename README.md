@@ -1,4 +1,4 @@
-# SAMP
+# SAMP / Maps
 Mapas criados para SAMP (San Andreas Multiplayer) em .pwn para o servidor Brasil Mata Mata Mundo Louco e Siga Bem Caminhoneiro.
 
 "Pawn é uma linguagem compilável, ou seja, o seu código é transformado para linguagem de computador, que somente o intérprete da linguagem consegue entender.
