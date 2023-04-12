@@ -8,3 +8,7 @@ podendo ser interpretado com outras linguagens de programação de terceira gera
 Pawn é a linguagem de programação usada no jogo GTA San Andreas.
 
 Alguns projetos feitos nos programas Texture Studio (com texturas) e outros em SAMP Map Construction.
+
+![image](https://user-images.githubusercontent.com/76701595/231412637-6a4826bd-c495-426e-95a8-27312d3ad8d2.png)
+![image](https://user-images.githubusercontent.com/76701595/231412710-a63e2d83-5e8c-49c7-981a-aa2699d8f9cf.png)
+
