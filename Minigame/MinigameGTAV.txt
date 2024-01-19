@@ -1,3 +1,10 @@
+#include <a_samp>
+#include <Pawn.CMD>
+
+#define SBC::%0(%1)             forward %0(%1); public %0(%1)
+#define TEAM_CARS 2
+#define TEAM_SNIPERS 1
+
 new world[MAX_PLAYERS];
 new GetSpectatingID[MAX_PLAYERS];
 new Float:health2[MAX_PLAYERS];
@@ -53,6 +60,7 @@ new Float:SpawnSnipers[12][4] = {
 {1622.88123, -2592.05713, 55.69350, 90.0}
 };
 
+
 MinigameInit()
 {
 	Snipers = 0;
@@ -92,30 +100,37 @@ MinigameExit()
 // 	return 1;
 // }
 
-MiniGameOnPlayerDisconnect(playerid)
+public OnPlayerDisconnect(playerid)
 {
 	new notmggtav[34], notmggtav2[30];
+	new playername[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, playername, sizeof(playername));
+
 	if(PlayerNoMG[playerid] == 1)
 	{
 		if(Equipes[playerid] == 1)
 		{
-			format(notmggtav2,sizeof(notmggtav2),"Saiu do minigame equipe sniper");
 			Snipers -=1;
 		}
 		else if(Equipes[playerid] == 2)
 		{
-			format(notmggtav2,sizeof(notmggtav2),"Saiu do minigame equipe cars");
 			Cars -=1;
 		}
+		new message[256];
+		format(message, sizeof(message), "[Minigame] %s saiu do minigame. Resta: %d Carros VS %d Snipers.", playername, Cars, Snipers);
+		SendClientMessageToAll(0xFF0000, message);
+
 		if(Cars == 0 || Snipers == 0)
 		{
 			if(Snipers == 0 && MGAcontecendo == true)
 			{
-				SendClientMessageToAllf2(-1, #av "Equipe cars ganhou.");
+				SendClientMessageToAll(-1, "[Minigame] Equipe CARROS ganhou.");
+				carsWin();
 			}
 			if(Cars == 0 && MGAcontecendo == true)
 			{
-				SendClientMessageToAllf2(-1, #av "Equipe snipers ganhou.");
+				SendClientMessageToAll(-1, "[Minigame] Equipe SNIPERS ganhou.");
+				snipersWin();
 
 			}
 			FinalMG(playerid);
@@ -124,7 +139,7 @@ MiniGameOnPlayerDisconnect(playerid)
 		Rank532--;
 		UpdatePlayer();
 	}
-	format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
+	//format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
     //notification.Show(playerid, notmggtav, notmggtav2, "", "LD_CHAT:thumbup");
 	PlayerNoInfernus[playerid] = -1;
 	PlayerNoMG[playerid] = 0;
@@ -133,7 +148,7 @@ MiniGameOnPlayerDisconnect(playerid)
 	return 1;
 }
 
-MiniGameOnPlayerStateChange(playerid, newstate, oldstate)
+public OnPlayerStateChange(playerid, newstate, oldstate)
 {
 	if(newstate != oldstate)
 	{
@@ -158,24 +173,31 @@ MiniGameOnPlayerStateChange(playerid, newstate, oldstate)
 	return 1;
 }
 
-MiniGameOnPlayerDeath(playerid, killerid)
+public OnPlayerDeath(playerid, killerid)
 {
 	new notmggtav[34], notmggtav2[30];
+	new playername[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, playername, sizeof(playername));
+
 	if(PlayerNoMG[playerid] == 1)
 	{
 		if(Equipes[playerid] == 1)
 		{
-			format(notmggtav2,sizeof(notmggtav2),"Saiu do minigame equipe sniper");
-			Snipers -=1;
-			if(Snipers > 1)
-			{
-				OnPlayerSpectate(playerid, killerid);
-			}
+        Snipers -=1;
+        new message[256];
+		format(message, sizeof(message), "[Minigame] %s foi ATROPELHADO. Resta: %d Carros VS %d Snipers.", playername, Cars, Snipers);
+		SendClientMessageToAll(0xFF0000, message);
+            if(Snipers > 1)
+            {
+                OnPlayerSpectate(playerid, killerid);
+            }
 		}
 		else if(Equipes[playerid] == 2)
 		{
-			format(notmggtav2,sizeof(notmggtav2),"Saiu do minigame equipe cars");
-			Cars -=1;
+        Cars -=1;
+   		new message[256];
+		format(message, sizeof(message), "[Minigame] %s levou uma SNIPADA. Resta: %d Carros VS %d Snipers.", playername, Cars, Snipers);
+		SendClientMessageToAll(0xFF0000, message);
 			if(Cars > 1)
 			{
 				OnPlayerSpectate(playerid, killerid);
@@ -185,12 +207,13 @@ MiniGameOnPlayerDeath(playerid, killerid)
 		{
 			if(Snipers == 0 && MGAcontecendo == true)
 			{
-				SendClientMessageToAllf2(-1, #av "Equipe cars ganhou.");
+				SendClientMessageToAll(-1, "[Minigame] Equipe CARROS ganhou.");
+				carsWin();
 			}
 			if(Cars == 0 && MGAcontecendo == true)
 			{
-				SendClientMessageToAllf2(-1, #av "Equipe snipers ganhou.");
-
+				SendClientMessageToAll(-1, "[Minigame] Equipe SNIPERS ganhou.");
+				snipersWin();
 			}
 			FinalMG(playerid);
 			return 1;
@@ -198,29 +221,31 @@ MiniGameOnPlayerDeath(playerid, killerid)
 		Rank532--;
 		UpdatePlayer();
 	}
-	format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
+	//format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
     //notification.Show(playerid, notmggtav, notmggtav2, "", "LD_CHAT:thumbup");
 	return 1;
 }
 
-MiniGameOnPlayerKeyStateChange(playerid, newkeys)
+public OnPlayerUpdate(playerid)
 {
-	if(newkeys == KEY_FIRE)
-	{
-		if(PlayerNoMG[playerid] == 1)
+ 	if(PlayerNoMG[playerid] == 1)
 		{
-			new InfernusFR, Float:InfernusH, Float: Ang;
+			new InfernusFR, Float:InfernusH;
 			InfernusFR = GetPlayerVehicleID(playerid);
-			GetVehicleHealth(InfernusFR, InfernusH);
-			if(IsPlayerInAnyVehicle(playerid))
+			if(GetVehicleHealth(InfernusFR, InfernusH) < 80)
 				{
-					GetVehicleZAngle(InfernusFR, Ang);
-					SetVehicleZAngle(InfernusFR, Ang);
+					//GetVehicleZAngle(InfernusFR, Ang);
+					//SetVehicleZAngle(InfernusFR, Ang);
 					RepairVehicle(InfernusFR);
 					AddVehicleComponent(InfernusFR, 1010);
 				}
 		}
-	}
+
+	return 1;
+}
+
+public OnPlayerKeyStateChange(playerid, newkeys)
+{
 	return 1;
 }
 
@@ -230,6 +255,7 @@ SBC:: StartMG(playerid, time)
 	{
 		if(Rank532 <= 1 && Snipers == 0 || Cars == 0)
 		{
+			SendClientMessageToAll(-1, "Minigame cancelado. Motivo: 2 jogadores necess·rios.");
 	    	//notification.Show(playerid, "", "Minigame cancelado. Motivo:", "Jogadores Insuficientes.", "LD_CHAT:thumbup");
 			FinalMG(playerid);
 			return 1;
@@ -668,7 +694,7 @@ CMD:abrirmg2(playerid, params[])
  	new notmggtav[34];
 	if(MGON == true)
 	{
-		SendClientMessage(playerid, -1, #av "O minigame j√° foi aberto!");
+		SendClientMessage(playerid, -1, "[ERRO] O minigame j· foi aberto!");
 	}
 	else if(MGON == false)
 	{
@@ -676,11 +702,13 @@ CMD:abrirmg2(playerid, params[])
 		Mapa();
 		MGON = true;
 		StartVar += 1;
-		Timers[1] = SetTimer("StartMG", 60000, false);
-		Timers[2] = SetTimer("UpdateRainbow", 150, true);
-		format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
+		Timers[1] = SetTimer("StartMG", 30000, false);
+		Timers[2] = SetTimer("UpdateRainbow", 1000, true);
+		SendClientMessageToAll(-1, "");
+        SendClientMessageToAll(0xFF0000, "[SBC] O minigame GTA V RUNNERS VS SNIPERS comeca em 1 minuto! Entre usando /irmg");
+		//format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
 	    //notification.Show(playerid, notmggtav, "Iniciou o MiniGame GTA V", "1 minuto para iniciar!", "LD_CHAT:thumbup");
-		SendClientMessageToAll(-1, notmggtav);
+		SendClientMessageToAll(-1, "");
 	}
 	return 1;
 }
@@ -690,22 +718,22 @@ CMD:irmg(playerid, params[])
 	new notmggtav[34], notmggtav2[13];
 	if(MGON == false)
 	{
-		SendClientMessage(playerid, -1, #av "Nenhum minigame aberto no momento!");
+		SendClientMessage(playerid, -1, "[ERRO] Nenhum minigame aberto no momento!");
 		return 1;
 	}
 	if(PlayerNoMG[playerid] == 1)
 	{
-		SendClientMessage(playerid, -1, #av "Voc√™ j√° est√° no minigame!");
+		SendClientMessage(playerid, -1, "[ERRO] VocÍ j· est· no minigame!");
 		return 1;
 	}
 	if(MGAcontecendo == true)
 	{
-		SendClientMessage(playerid, -1, #av "O minigame j√° iniciou!");
+		SendClientMessage(playerid, -1, #av "[ERRO] O minigame j· iniciou!");
 		return 1;
 	}
 	if(MGON == true && Snipers >= 12 && Cars >= 12)
 	{
-		SendClientMessage(playerid,-1, #av "O minigame est√° cheio,tente na pr√≥xima rodada.");
+		SendClientMessage(playerid,-1, #av "[ERRO] O minigame est· cheio, tente na prÛxima rodada.");
 	}
 	if(MGON == true && Balance == 0)
 	{
@@ -761,7 +789,7 @@ CMD:irmg(playerid, params[])
 			}
 		}
 	}
-	format(notmggtav,sizeof(notmggtav), "O jogador %s", APlayerData[playerid][PlayerName]);
+	//format(notmggtav,sizeof(notmggtav), "O jogador %s", APlayerData[playerid][PlayerName]);
 	if(Equipes[playerid] == 1)
 	{
 		format(notmggtav2,sizeof(notmggtav2),"equipe snipers");
@@ -776,48 +804,74 @@ CMD:irmg(playerid, params[])
 
 CMD:sairmg2(playerid, params[])
 {
-	new notmggtav[34], notmggtav2[13];
-	if(PlayerNoMG[playerid] == 1)
-	{
-		if(Equipes[playerid] == 1)
-		{
-			Snipers -=1;
-			PlayerNoMG[playerid] = false;
-			Rank532 -=1;
-			Equipes[playerid] = false;
-			Balance = 0;
-			format(notmggtav2,sizeof(notmggtav2),"equipe snipers");
-		}
-		else if(Equipes[playerid == 2])
-		{
-			Cars -=1;
-			PlayerNoMG[playerid] = false;
-			Rank532 -=1;
-			PlayerNoInfernus[playerid] = -1;
-			Equipes[playerid] = false;
-			Balance = 1;
-			format(notmggtav2,sizeof(notmggtav2),"equipe cars");
-		}
-		SetPlayerVirtualWorld(playerid, 0);
-		SetPlayerHealth(playerid, Float:100.0);
-		ResetPlayerWeapons(playerid);
-		SetPlayerPos(playerid,-2796.9854, 1224.8180, 20.5429);
-		TogglePlayerControllable(playerid, true);
-		SetCameraBehindPlayer(playerid);
-		TextDrawHideForPlayer(playerid, TextRank);
-		TextDrawHideForPlayer(playerid, TextEquipes);
-		TextDrawHideForPlayer(playerid, Text2);
-		TextDrawHideForPlayer(playerid, Box);
-		TextDrawHideForPlayer(playerid, Circle);
-		format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
-		//notification.Show(playerid, notmggtav, "Saiu do MiniGame GTA V", notmggtav2, "LD_CHAT:thumbup");
-	}
-	else
-	{
-		SendClientMessage(playerid, -1, #er "Voc√™ n√£o est√° em um minigame!");
-	}
-	UpdatePlayer();
-	return 1;
+    new notmggtav[34], notmggtav2[13];
+	new playername[MAX_PLAYER_NAME];
+
+    GetPlayerName(playerid, playername, sizeof(playername));
+
+    if (PlayerNoMG[playerid] == 1)
+    {
+        if (Equipes[playerid] == 1)
+        {
+            Snipers -= 1;
+            PlayerNoMG[playerid] = false;
+            Rank532 -= 1;
+            Equipes[playerid] = false;
+            Balance = 0;
+            format(notmggtav2, sizeof(notmggtav2), "equipe snipers");
+        }
+        else if (Equipes[playerid] == 2)
+        {
+            Cars -= 1;
+            PlayerNoMG[playerid] = false;
+            Rank532 -= 1;
+            PlayerNoInfernus[playerid] = -1;
+            Equipes[playerid] = false;
+            Balance = 1;
+            format(notmggtav2, sizeof(notmggtav2), "equipe cars");
+        }
+
+        SetPlayerVirtualWorld(playerid, 0);
+        SetPlayerHealth(playerid, Float:100.0);
+        ResetPlayerWeapons(playerid);
+        //COMENTAR MAIS TARDE (por causa do /nasceraqui)
+        SetPlayerPos(playerid,-2796.9854, 1224.8180, 20.5429);
+        TogglePlayerControllable(playerid, true);
+        SetCameraBehindPlayer(playerid);
+        TextDrawHideForPlayer(playerid, TextRank);
+        TextDrawHideForPlayer(playerid, TextEquipes);
+        TextDrawHideForPlayer(playerid, Text2);
+        TextDrawHideForPlayer(playerid, Box);
+        TextDrawHideForPlayer(playerid, Circle);
+        // format(notmggtav,sizeof(notmggtav),"O jogador %s", APlayerData[playerid][PlayerName]);
+        // notification.Show(playerid, notmggtav, "Saiu do MiniGame GTA V", notmggtav2, "LD_CHAT:thumbup");
+
+        if (Cars == 0 && Snipers == 1 && MGAcontecendo == true)
+        {
+        new message[256];
+		format(message, sizeof(message), "[Minigame] %s saiu do minigame. Resta: %d Carros VS %d Snipers.", playername, Cars, Snipers);
+		SendClientMessageToAll(0xFF0000, message);
+            snipersWin();
+       	    FinalMG(playerid);
+            SendClientMessageToAll(-1, "[Minigame] Equipe SNIPERS ganhou.");
+        }
+        if (Cars == 1 && Snipers == 0 && MGAcontecendo == true)
+        {
+        new message[256];
+		format(message, sizeof(message), "[Minigame] %s saiu do minigame. Resta: %d Carros VS %d Snipers.", playername, Cars, Snipers);
+		SendClientMessageToAll(0xFF0000, message);
+            carsWin();
+            FinalMG(playerid);
+            SendClientMessageToAll(-1, "[Minigame] Equipe CARROS ganhou.");
+        }
+    }
+    else
+    {
+        SendClientMessage(playerid, -1, "VocÍ n„o est· em um minigame!");
+    }
+
+    UpdatePlayer();
+    return 1;
 }
 
 CMD:debug2(playerid, params[])
@@ -827,4 +881,29 @@ CMD:debug2(playerid, params[])
 	print(Debug);
 	SendClientMessageToAll(0x696969FF, Debug);
 	return 1;
+}
+
+
+/*
+PR…MIOS
+*/
+
+snipersWin()
+{
+    for (new i = 0; i < MAX_PLAYERS; i++) {
+        if (Equipes[i] == TEAM_SNIPERS) {
+            SetPlayerScore(i, GetPlayerScore(i) + 5);
+            GivePlayerMoney(i, 5000);
+        }
+    }
+}
+
+carsWin()
+{
+    for (new i = 0; i < MAX_PLAYERS; i++) {
+        if (Equipes[i] == TEAM_CARS) {
+            SetPlayerScore(i, GetPlayerScore(i) + 5);
+            GivePlayerMoney(i, 5000);
+        }
+    }
 }
